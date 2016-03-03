@@ -1,14 +1,33 @@
 
+#ifndef jfdt_base_h
+#define jfdt_base_h
+
 #include <sys/time.h>
 
 extern int jfdtDebugLevel;
 
 void jfdtServe (void);
 
+#define jfdtTrace1(fmt,a) ((void)0)
+
 typedef struct jfdt_fd {
+  struct jfdt_fd *next;
   int fd;
   void *userdata;
 } jfdtFd_t;
+
+void jfdtFdInit (
+  jfdtFd_t *fd, int desc,
+  void (*inhdl) (jfdtFd_t *),
+  void (*outhdl) (jfdtFd_t *),
+  void *userdata);
+
+void jfdtFdReqIn (jfdtFd_t *);
+void jfdtFdReqOut (jfdtFd_t *);
+int jfdtFdWrite (jfdtFd_t *, void *, int);
+int jfdtFdRead (jfdtFd_t *, void *, int);
+int jfdtFdFini (jfdtFd_t *); /* Deactivate completely */
+int jfdtFdClose (jfdtFd_t *); /* Fini, and close the fd */
 
 typedef struct jfdt_listener {
   jfdtFd_t fd;
@@ -23,11 +42,14 @@ int jfdtListenerCreateTcp (
 
 void jfdtCloseFd (int);
 
-
-typedef struct jfdt_timeout {
-  struct timeval tm;
-} jfdtTimer_t;
-
 typedef struct timeval jfdtTime_t;
 
+typedef struct jfdt_timer {
+  struct jfdt_timer *next;
+  struct timeval tm;
+  void (*f) (struct jfdt_timer *t, jfdtTime_t tm);
+} jfdtTimer_t;
+
 extern jfdtTime_t jfdtGetTime ();
+
+#endif
