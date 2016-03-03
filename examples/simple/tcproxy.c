@@ -8,7 +8,14 @@ struct buf {
   struct buf *other;
 };
 
-void acpt (jfdtListener_t *l, int fd, void *addr, int adsize) {
+static void binit (struct buf *b, int fd, struct buf *o) {
+  nuxFdInit (&b->fd, fd, req, hdl, b);
+  b->start = 0;
+  b->end = 0;
+  b->other = o;
+}
+
+static void acpt (jfdtListener_t *l, int fd, void *addr, int adsize) {
   struct buf *b;
   int fd2 = jfdtOpenTcp ("localhost", 6601);
   if (fd2 == -1) {

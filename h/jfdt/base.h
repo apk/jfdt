@@ -10,9 +10,10 @@ typedef struct jdft_listener {
   void (*acpt) (struct jfdt_listener *, int fd, void *, int);
 } jfdtListener_t;
 
-int jfdtListenerCreateTcp (struct jfdt_listener *lstn,
-			   void (*acpt) (struct jfdt_listener *, int fd, void *, int),
-			   void *ud,
-			   int port);
+int jfdtListenerCreateTcp (
+  struct jfdt_listener *lstn,
+  void (*acpt) (struct jfdt_listener *, int fd, void *, int),
+  void *ud,
+  int port);
 
 void jfdtCloseFd (int);
