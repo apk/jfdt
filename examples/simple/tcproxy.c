@@ -24,10 +24,11 @@ static void bkillone (struct buf *b) {
 }
 
 static void bkill (struct buf *b) {
+  struct buf *o = b->other;
   bkillone (b);
-  if (b->other != b) {
-    bkillone (b->other);
-    if (b->other == b + 1) {
+  if (o != b) {
+    bkillone (o);
+    if (o == b + 1) {
       free (b);
     }
   } else {
@@ -36,15 +37,16 @@ static void bkill (struct buf *b) {
 }
 
 static void breqs (struct buf *b) {
+  struct buf *o = b->other;
   if (b->end < sizeof (b->buf) && !b->eof) {
     /* Space to read */
     /* Might try immediate read? */
     jfdtFdReqIn (&b->fd);
   }
-  if (b->end > b->start || b->eof == 1) {
+  if (o->end > o->start || o->eof == 1) {
     /* Data to write */
     /* XXX Might try an immediate write... */
-    jfdtFdReqOut (&b->other->fd);
+    jfdtFdReqOut (&b->fd);
   }
 }
 
@@ -65,13 +67,14 @@ static void inhdl (jfdtFd_t *fd) {
 
 static void outhdl (jfdtFd_t *fd) {
   struct buf *b = fd->userdata;
-  if (b->end > b->start) {
-    int r = jfdtFdWrite (&b->other->fd, b->buf + b->start, b->end - b->start);
+  struct buf *o = b->other;
+  if (o->end > o->start) {
+    int r = jfdtFdWrite (&b->fd, o->buf + o->start, o->end - o->start);
     if (r > 0) {
-      b->start +=r;
-      if (b->start == b->end) {
-	b->start = 0;
-	b->end = 0;
+      o->start +=r;
+      if (o->start == o->end) {
+	o->start = 0;
+	o->end = 0;
       }
     } else if (r == 0) {
       /* EWOULDBLOCK? */
@@ -81,8 +84,8 @@ static void outhdl (jfdtFd_t *fd) {
       return;
     }
     breqs (b);
-  } else if (b->eof) {
-    jfdtFdShutdown (&b->other->fd);
+  } else if (o->eof) {
+    jfdtFdShutdown (&b->fd);
     b->eof = 2;
   }
 }
