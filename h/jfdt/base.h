@@ -1,3 +1,6 @@
+
+#include <sys/time.h>
+
 void jdftServe (void);
 
 typedef struct jfdt_fd {
@@ -17,3 +20,12 @@ int jfdtListenerCreateTcp (
   int port);
 
 void jfdtCloseFd (int);
+
+
+typedef struct jfdt_timeout {
+  struct timeval tm;
+} jfdtTimer_t;
+
+typedef struct timeval jfdtTime_t;
+
+extern jfdtTime_t jfdtGetTime ();
