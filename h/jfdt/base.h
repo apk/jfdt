@@ -26,8 +26,9 @@ void jfdtFdReqIn (jfdtFd_t *);
 void jfdtFdReqOut (jfdtFd_t *);
 int jfdtFdWrite (jfdtFd_t *, void *, int);
 int jfdtFdRead (jfdtFd_t *, void *, int);
-int jfdtFdFini (jfdtFd_t *); /* Deactivate completely */
-int jfdtFdClose (jfdtFd_t *); /* Fini, and close the fd */
+void jfdtFdFini (jfdtFd_t *); /* Deactivate completely */
+void jfdtFdClose (jfdtFd_t *); /* Fini, and close the fd */
+int jfdtFdShutdown (jfdtFd_t *); /* Shutdown output direction */
 
 typedef struct jfdt_listener {
   jfdtFd_t fd;
