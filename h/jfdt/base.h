@@ -1,14 +1,16 @@
 
 #include <sys/time.h>
 
-void jdftServe (void);
+extern int jfdtDebugLevel;
+
+void jfdtServe (void);
 
 typedef struct jfdt_fd {
   int fd;
   void *userdata;
 } jfdtFd_t;
 
-typedef struct jdft_listener {
+typedef struct jfdt_listener {
   jfdtFd_t fd;
   void (*acpt) (struct jfdt_listener *, int fd, void *, int);
 } jfdtListener_t;

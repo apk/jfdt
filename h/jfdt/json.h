@@ -17,7 +17,7 @@ typedef struct json {
     struct jsonarr {
       int len;
       int alloc_len;
-      struct json val [1];
+      struct json *val [1];
     } *a;
   } u;
 } json_t;

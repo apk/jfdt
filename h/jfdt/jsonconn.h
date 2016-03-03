@@ -1,3 +1,5 @@
+#include "jfdt/base.h"
+#include "jfdt/json.h"
 
 typedef struct jfdt_jsonconn {
   jfdtFd_t fd;
