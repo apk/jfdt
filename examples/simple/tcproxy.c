@@ -38,6 +38,10 @@ static void bkill (struct buf *b) {
 
 static void breqs (struct buf *b) {
   struct buf *o = b->other;
+  if (b->eof >1 && o->eof > 1) {
+    bkill (b);
+    return;
+  }
   if (b->end < sizeof (b->buf) && !b->eof) {
     /* Space to read */
     /* Might try immediate read? */
