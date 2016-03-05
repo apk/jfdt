@@ -57,10 +57,9 @@ static void breqs (struct buf *b) {
 static void inhdl (jfdtFd_t *fd) {
   struct buf *b = fd->userdata;
   int r = jfdtFdRead (fd, b->buf + b->end, sizeof (b->buf) - b->end);
-  if (r > 0) {
+  if (r >= 0) {
     b->end +=r;
-  } else if (r == 0) {
-    /* EWOULDBLOCK? */
+  } else if (r == -1) {
     b->eof |= 1;
   } else {
     bkill (b);
@@ -74,15 +73,12 @@ static void outhdl (jfdtFd_t *fd) {
   struct buf *o = b->other;
   if (o->end > o->start) {
     int r = jfdtFdWrite (&b->fd, o->buf + o->start, o->end - o->start);
-    if (r > 0) {
+    if (r >= 0) {
       o->start +=r;
       if (o->start == o->end) {
 	o->start = 0;
 	o->end = 0;
       }
-    } else if (r == 0) {
-      /* EWOULDBLOCK? */
-      bkill (b);
     } else {
       bkill (b);
       return;
@@ -107,7 +103,7 @@ static void acpt (jfdtListener_t *l, int fd, void *addr, int adsize) {
   struct buf *b;
   int fd2 = jfdtOpenTcp ("localhost", 6601);
   if (fd2 == -1) {
-    jfdtTrace1 ("Closing %d", fd);
+    jfdt_trace1 ("Closing %d", fd);
     jfdtCloseFd (fd);
     return;
   }
@@ -120,14 +116,12 @@ int main () {
 
   jfdtListener_t lstn;
 
-  jfdtListenerCreateTcp (&lstn, acpt, 0, 6600);
+  int r = jfdtListenerCreateTcp (&lstn, acpt, 0, 6600);
+  if (r < 0) {
+    jfdt_trace1 ("Failed to create listener: %s", jfdtErrorString (r));
+    exit (1);
+  }
 
   jfdtServe ();
   return 0;
 }
-
-/*
-  Local variables:
-  compile-command: "gcc -Wall -o tcproxy -I ../../h tcproxy.c"
-  End:
-*/
