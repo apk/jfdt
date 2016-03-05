@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -11,8 +13,13 @@
  */
 int jfdtOpenTcp (const char *host, int port) {
   int err = 0;
-  struct addrinfo *res, *c;
-  int r = getaddrinfo (host, 0, 0, &res);
+  int r;
+  char serv [32];
+  struct addrinfo hints, *res, *c;
+  sprintf (serv, "%d", port);
+  memset (&hints, 0, sizeof (hints));
+  hints.ai_flags = AI_NUMERICSERV;
+  r = getaddrinfo (host, serv, 0, &res);
   if (r == -1) {
     return jfdtErrnoMap (errno);
   }

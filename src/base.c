@@ -20,6 +20,9 @@ void jfdtFdInit (jfdtFd_t *fd, int desc,
   fd->inhdl = inhdl;
   fd->outhdl = outhdl;
   fd->userdata = userdata;
+  // TODO: should probably append, and warn if already in.
+  fd->next = fd_list;
+  fd_list = fd;
 }
 
 
@@ -89,16 +92,20 @@ void jfdtServe (void) {
 	  n = fd->fd + 1;
 	}
 	if (fd->flags & 1) {
+	  jfdt_trace ("R:%d", fd->fd);
 	  FD_SET (fd->fd, &rfds);
 	}
 	if (fd->flags & 2) {
+	  jfdt_trace ("W:%d", fd->fd);
 	  FD_SET (fd->fd, &wfds);
 	}
       }
     }
+    jfdt_trace ("N:%d", n);
     r = select (n, &rfds, &wfds, 0, 0);
+    jfdt_trace (" :%d", r);
     if (r == -1) {
-      jfdt_trace1 ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
+      jfdt_trace ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
       exit (5);
     }
     for (fd = fd_list; fd; fd = fd->next) {

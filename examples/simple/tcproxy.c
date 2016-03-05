@@ -25,6 +25,7 @@ static void bkillone (struct buf *b) {
 
 static void bkill (struct buf *b) {
   struct buf *o = b->other;
+  jfdt_trace ("bkill");
   bkillone (b);
   if (o != b) {
     bkillone (o);
@@ -38,7 +39,7 @@ static void bkill (struct buf *b) {
 
 static void breqs (struct buf *b) {
   struct buf *o = b->other;
-  if (b->eof >1 && o->eof > 1) {
+  if (b->eof > 1 && o->eof > 1) {
     bkill (b);
     return;
   }
@@ -101,15 +102,20 @@ static void binit (struct buf *b, int fd, struct buf *o) {
 
 static void acpt (jfdtListener_t *l, int fd, void *addr, int adsize) {
   struct buf *b;
+#if 0
   int fd2 = jfdtOpenTcp ("localhost", 6601);
-  if (fd2 == -1) {
-    jfdt_trace1 ("Closing %d", fd);
+  if (fd2 < 0) {
+    jfdt_trace ("Closing %d", fd);
     jfdtCloseFd (fd);
     return;
   }
   b = malloc (2 * sizeof (struct buf));
   binit (b, fd, b + 1);
   binit (b + 1, fd2, b);
+#else
+  b = malloc (sizeof (struct buf));
+  binit (b, fd, b);
+#endif
 }
 
 int main () {
@@ -118,9 +124,10 @@ int main () {
 
   int r = jfdtListenerCreateTcp (&lstn, acpt, 0, 6600);
   if (r < 0) {
-    jfdt_trace1 ("Failed to create listener: %s", jfdtErrorString (r));
+    jfdt_trace ("Failed to create listener: %s", jfdtErrorString (r));
     exit (1);
   }
+  jfdt_trace ("main loop");
 
   jfdtServe ();
   return 0;

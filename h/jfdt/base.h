@@ -10,7 +10,8 @@ void jfdtServe (void);
 
 void jfdtTraceF (const char *file, int line, const char *fmt, ...);
 
-#define jfdt_trace1(fmt...) (jfdtTraceF (__FILE__, __LINE__, fmt))
+#define jfdt_trace(fmt...) (jfdtTraceF (__FILE__, __LINE__, fmt))
+
 typedef struct jfdt_fd {
   struct jfdt_fd *next;
   int fd;
@@ -37,6 +38,7 @@ void jfdtFdShutdown (jfdtFd_t *); /* Shutdown output direction */
 typedef struct jfdt_listener {
   jfdtFd_t fd;
   void (*acpt) (struct jfdt_listener *, int fd, void *, int);
+  void *userdata;
 } jfdtListener_t;
 
 int jfdtListenerCreateTcp (
@@ -53,6 +55,7 @@ typedef struct jfdt_timer {
   struct jfdt_timer *next;
   struct timeval tm;
   void (*f) (struct jfdt_timer *t, jfdtTime_t tm);
+  void *userdata;
 } jfdtTimer_t;
 
 extern jfdtTime_t jfdtGetTime ();

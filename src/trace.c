@@ -24,9 +24,10 @@ const char *jfdtErrorString (int e) {
 void jfdtTraceF (const char *file, int line, const char *fmt, ...) {
   va_list ap;
   va_start (ap, fmt);
-  fprintf (stderr, "%s:%d:", file, line);
+  fprintf (stderr, "%s:%d: ", file, line);
   vfprintf (stderr, fmt, ap);
   fprintf (stderr, "\n");
   va_end (ap);
+  fflush (stderr);
 }
 
