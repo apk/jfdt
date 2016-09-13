@@ -8,6 +8,7 @@
 #include "base.h"
 
 static jfdtFd_t *fd_list = 0;
+static jfdtTimer_t *timer_list = 0;
 
 void jfdtFdInit (jfdtFd_t *fd, int desc,
   void (*inhdl) (jfdtFd_t *),
@@ -77,13 +78,102 @@ int jfdtFdWrite (jfdtFd_t *fd, void *buf, int size) {
   return jfdtErrnoMap (errno);
 }
 
+jfdtTime_t jfdtGetTime () {
+  struct timeval tv;
+  int r = gettimeofday (&tv, 0);
+  if (r == -1) {
+    exit (1);
+  }
+  return tv;
+}
+
+int jfdtTimeLessThan (jfdtTime_t a, jfdtTime_t b) {
+  return (a.tv_sec < b.tv_sec ||
+	  (a.tv_sec == b.tv_sec &&
+	   a.tv_usec < b.tv_usec));
+}
+
+void jfdtTimeAddFrac (jfdtTime_t *t, int n, int d) {
+  n *= 1000000;
+  n /= d;
+  t->tv_sec += n / 1000000;
+  t->tv_usec += n % 1000000;
+}
+
+void jfdtTimeAddSecs (jfdtTime_t *t, int s) {
+  t->tv_sec += s;
+}
+
+void jfdtTimeSub (jfdtTime_t *t, jfdtTime_t b) {
+  t->tv_sec -= b.tv_sec;
+  if (t->tv_usec < b.tv_usec) {
+    t->tv_sec -= 1;
+    t->tv_usec += 1000000;
+  }
+  t->tv_usec -= b.tv_usec;
+}
+
+void jfdtTimerInit (jfdtTimer_t *t,
+		    void (*fire) (jfdtTimer_t *, jfdtTime_t now),
+		    void *userdata) {
+  t->f = fire;
+  t->userdata = userdata;
+  t->next = t;
+}
+
+void jfdtTimerUnset (jfdtTimer_t *t) {
+  jfdtTimer_t **pp, *p;
+  if (t->next != t) {
+    for (pp = &timer_list; (p = *pp); pp = &p->next) {
+      if (p == t) {
+	*pp = t->next;
+	return;
+      }
+    }
+    jfdt_trace ("timer: unset: oops");
+    sleep (3);
+  }
+}
+
+void jfdtTimerSet (jfdtTimer_t *t, jfdtTime_t d) {
+  jfdtTimer_t **pp, *p;
+  if (t->next != t) {
+    jfdtTimerUnset (t);
+  }
+  t->tm = d;
+  for (pp = &timer_list; (p = *pp); pp = &p->next) {
+    if (jfdtTimeLessThan (t->tm, p->tm)) {
+      break;
+    }
+  }
+  t->next = p;
+  *pp = t;
+}
+
 void jfdtServe (void) {
   while (1) {
     fd_set rfds;
     fd_set wfds;
     jfdtFd_t *fd;
+    jfdtTimer_t *t;
+    struct timeval to, *p = 0;
     int r;
     int n = 0;
+    while (t = timer_list) {
+      jfdtTime_t now = jfdtGetTime ();
+      if (jfdtTimeLessThan (now, t->tm)) {
+	to = t->tm;
+	jfdtTimeSub (&to, now);
+	p = &to;
+	break;
+      }
+      timer_list = t->next;
+      t->next = t;
+      t->f (t, now);
+    }
+    if (p) {
+      jfdt_trace("T:%d.%d", (int)p->tv_sec, (int)p->tv_usec);
+    }
     FD_ZERO (&rfds);
     FD_ZERO (&wfds);
     for (fd = fd_list; fd; fd = fd->next) {
@@ -102,7 +192,7 @@ void jfdtServe (void) {
       }
     }
     jfdt_trace ("N:%d", n);
-    r = select (n, &rfds, &wfds, 0, 0);
+    r = select (n, &rfds, &wfds, 0, p);
     jfdt_trace (" :%d", r);
     if (r == -1) {
       jfdt_trace ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));

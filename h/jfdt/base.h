@@ -51,6 +51,11 @@ void jfdtCloseFd (int);
 
 typedef struct timeval jfdtTime_t;
 
+extern int jfdtTimeLessThan (jfdtTime_t, jfdtTime_t);
+extern void jfdtTimeAddFrac (jfdtTime_t *, int n, int d);
+extern void jfdtTimeAddSecs (jfdtTime_t *, int s);
+extern void jfdtTimeSub (jfdtTime_t *, jfdtTime_t);
+
 typedef struct jfdt_timer {
   struct jfdt_timer *next;
   struct timeval tm;
@@ -59,6 +64,11 @@ typedef struct jfdt_timer {
 } jfdtTimer_t;
 
 extern jfdtTime_t jfdtGetTime ();
+extern void jfdtTimerInit (jfdtTimer_t *,
+			   void (*fire) (jfdtTimer_t *, jfdtTime_t now),
+			   void *userdata);
+extern void jfdtTimerSet (jfdtTimer_t *, jfdtTime_t);
+extern void jfdtTimerUnset (jfdtTimer_t *);
 
 int jfdtErrnoMap (int n);
 int jfdtErrorMap (const char *t);
