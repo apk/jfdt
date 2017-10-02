@@ -26,7 +26,6 @@ void jfdtFdInit (jfdtFd_t *fd, int desc,
   fd_list = fd;
 }
 
-
 void jfdtFdClose (jfdtFd_t *fd) {
   jfdtFdFini (fd);
   close (fd->fd);
@@ -195,6 +194,7 @@ void jfdtServe (void) {
     r = select (n, &rfds, &wfds, 0, p);
     jfdt_trace (" :%d", r);
     if (r == -1) {
+      if (errno == EINTR) continue;
       jfdt_trace ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
       exit (5);
     }
