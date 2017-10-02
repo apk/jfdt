@@ -33,6 +33,7 @@ static void fdhdl (jfdtFd_t *fd) {
     jfdtExec_t *exe, **pp;
     int status;
     int r = waitpid (-1, &status, WNOHANG);
+    if (r == 0) break;
     if (r == -1) break;
     jfdt_trace ("pid: %d", r);
     for (pp = &execlist; ; pp = &exe->next) {
