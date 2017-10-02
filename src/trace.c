@@ -22,6 +22,7 @@ const char *jfdtErrorString (int e) {
 }
 
 void jfdtTraceF (const char *file, int line, const char *fmt, ...) {
+#if 0
   va_list ap;
   va_start (ap, fmt);
   fprintf (stderr, "%s:%d: ", file, line);
@@ -29,5 +30,6 @@ void jfdtTraceF (const char *file, int line, const char *fmt, ...) {
   fprintf (stderr, "\n");
   va_end (ap);
   fflush (stderr);
+#endif
 }
 
