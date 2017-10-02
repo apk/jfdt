@@ -10,3 +10,4 @@ done
 ar rc .obj/jfdt.a .obj/o/*.o || exit 1
 
 gcc -Wall -g -o .obj/tcproxy -I h examples/simple/tcproxy.c .obj/jfdt.a
+gcc -Wall -g -o .obj/regexec -I h examples/simple/regexec.c .obj/jfdt.a
