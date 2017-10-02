@@ -1,6 +1,8 @@
 set -x
 cd "`dirname "$0"`"
 
+# run-on-change src/*.c h/jfdt/*.h the.sh -- sh the.sh
+
 rm -rf .obj
 mkdir -p .obj/o || exit 1
 for i in src/*.c; do
