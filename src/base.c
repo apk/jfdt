@@ -158,7 +158,7 @@ void jfdtServe (void) {
     struct timeval to, *p = 0;
     int r;
     int n = 0;
-    while (t = timer_list) {
+    while ((t = timer_list)) {
       jfdtTime_t now = jfdtGetTime ();
       if (jfdtTimeLessThan (now, t->tm)) {
 	to = t->tm;
