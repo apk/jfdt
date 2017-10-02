@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -17,14 +18,38 @@ static void setnb (int fd) {
   fcntl (fd, F_SETFL, fcntl (fd, F_GETFL) | O_NONBLOCK);
 }
 
+void jfdtExecTriggerAsync (void) {
+  (void)write (fdpair [1], "", 1);
+}
+
 static void sigchld (int n) {
   int save_errno = errno;
-  //(void)write (fdpair [1], "", 1);
-  (void)write (fdpair [1], "", 1);
+  jfdtExecTriggerAsync ();
   errno = save_errno;
 }
 
+static void stray (int pid, int status) {
+  jfdt_trace ("stray wait: %d %x", pid, status);
+}
+
+static void (*stray_hdlr) (int pid, int status) = stray;
+
+void jfdtExecSetStrayHandler (void (*f) (int pid, int status)) {
+  stray_hdlr = f;
+}
+
+static void (*async_handlers [16]) (void);
+int nhandlers = 0;
+
+void jfdtExecAddAsyncHandler (void (*f) (void)) {
+  if (nhandlers >= sizeof (async_handlers) / sizeof (async_handlers [0])) {
+    exit (197);
+  }
+  async_handlers [nhandlers ++] = f;
+}
+
 static void fdhdl (jfdtFd_t *fd) {
+  int i;
   char dummy [64];
   jfdtFdReqIn (fd);
   jfdt_trace ("fdhdl...");
@@ -38,7 +63,7 @@ static void fdhdl (jfdtFd_t *fd) {
     jfdt_trace ("pid: %d", r);
     for (pp = &execlist; ; pp = &exe->next) {
       if (!(exe = *pp)) {
-	jfdt_trace ("stray wait: %d %x", r, status);
+	stray_hdlr (r, status);
 	break;
       }
       if (exe->pid == r) {
@@ -47,6 +72,9 @@ static void fdhdl (jfdtFd_t *fd) {
 	break;
       }
     }
+  }
+  for (i = 0; i < nhandlers; i ++) {
+    async_handlers [i] ();
   }
 }
 

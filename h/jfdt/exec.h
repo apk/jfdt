@@ -17,3 +17,8 @@ int jfdtExecDo (jfdtExec_t *,
 		void *xud);
 
 void jfdtExecFini (jfdtExec_t *);
+
+void jfdtExecSetStrayHandler (void (*f) (int pid, int status));
+
+void jfdtExecAddAsyncHandler (void (*f) (void));
+void jfdtExecTriggerAsync (void);
