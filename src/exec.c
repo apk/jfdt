@@ -87,6 +87,7 @@ int jfdtExecDo (jfdtExec_t *exe,
 		void *userdata,
 		void *xud) {
   int r;
+  exe->userdata = userdata;
   jfdt_trace ("pair - %d, %d", fdpair [0], fdpair [1]);
   if (fdpair [0] == -1) {
     static struct sigaction act;
@@ -121,7 +122,6 @@ int jfdtExecDo (jfdtExec_t *exe,
     /* Parent */
     exe->pid = r;
     exe->term = term;
-    exe->userdata = userdata;
     exe->next = execlist;
     execlist = exe;
     return r;
