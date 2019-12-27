@@ -1,12 +1,16 @@
+#include "jfdt/base.h"
+
 typedef struct textconn {
   struct textconn *next;
   struct textconnlist *list;
+  jfdtFd_t fd;
   void *userdata;
 } textConn_t;
 
 typedef struct textconnlist {
   struct textconn *conns;
   void (*fini) (struct textconn *);
+  struct textconncmd *cmdtable;
   void *userdata;
 } textConnList_t;
 
@@ -16,6 +20,8 @@ typedef struct textconnlist {
 #define TEXTCONN_CMD_FAIL(x) \
   /* TODO: Send back a failure code, on what is visible as 'conn' */
 
+void textConnSend (textConn_t *conn, const char *msg);
+
 void textConnListAdd (textConnList_t *list, textConn_t *conn, int fd, void *userdata);
 
 typedef struct textconncmd {
@@ -24,7 +30,14 @@ typedef struct textconncmd {
   char *help;
 } textConnCmd_t;
 
-void textConnListInit (textConnList_t *list, const char *name, void (*fini) (textConn_t *conn), textConnCmd_t *cmdtable);
+void textConnListInit (textConnList_t *list, const char *name,
+		       void (*fini) (textConn_t *conn),
+		       textConnCmd_t *cmdtable);
+
+void textConnListSendToPredicated (textConnList_t *list,
+				   const char *msg,
+				   int (*pred) (textConn_t *conn, void *ud),
+				   void *ud);
 
 typedef struct textbuf {
   char *data;
@@ -37,12 +50,3 @@ void textBufAddName (textBuf_t *b, char *name);
 void textBufAddString (textBuf_t *b, char *str);
 void textBufAddAsgnInt (textBuf_t *b, char *name, int val);
 char *textBufFini (textBuf_t *b);
-
-
-/* Semi-unrelated stuff */
-
-typedef struct acceptor {
-  int fd;
-} acceptor_t;
-
-const char *acceptorInitTCP (struct acceptor *a, void (*newconn) (acceptor_t *a, int fd), int port);
