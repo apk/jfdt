@@ -4,6 +4,18 @@ typedef struct textconn {
   struct textconn *next;
   struct textconnlist *list;
   jfdtFd_t fd;
+
+  char *readbuf;
+  int readpos;
+  int readalloc;
+
+  struct textconn_data {
+    int len;
+    struct textconn_data *next;
+    char buf [1];
+  } *writedata;
+  int writepos;
+
   void *userdata;
 } textConn_t;
 
@@ -15,7 +27,7 @@ typedef struct textconnlist {
 } textConnList_t;
 
 #define TEXTCONN_CMD_HDLR(x) \
-  void (x) (textConn_t *conn, char *args, char *full) /* TODO: Should be a command context, for tagging */
+  void (x) (textConn_t *conn, const char *cmd, const char *args) /* TODO: Should be a command context, for tagging */
 
 #define TEXTCONN_CMD_FAIL(x) \
   /* TODO: Send back a failure code, on what is visible as 'conn' */
@@ -50,3 +62,10 @@ void textBufAddName (textBuf_t *b, char *name);
 void textBufAddString (textBuf_t *b, char *str);
 void textBufAddAsgnInt (textBuf_t *b, char *name, int val);
 char *textBufFini (textBuf_t *b);
+
+typedef struct textscan {
+  const char *str;
+} textScan_t;
+
+void textScanInit (textScan_t *s, const char *txt);
+const char *textScanGetName (textScan_t *s);
