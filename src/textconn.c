@@ -55,13 +55,17 @@ static void inhdl (jfdtFd_t *fd) {
     textScanInit (&S, conn->readbuf);
     cmd = textScanGetName (&S);
     if (cmd) {
-      /* Got a command (otherwise the line is  garbage) */
+      /* Got a command (otherwise the line is garbage) */
       struct textconncmd *ce;
       for (ce = conn->list->cmdtable; ce->name; ce ++) {
 	if (!strcmp (ce->name, cmd)) {
 	  /* Have command, handle */
 	  printf ("Have command (%s)...\n", cmd);
 	  ce->handler (conn, cmd, S.str);
+/* TODO: We should return to not execute the ReqIn then,
+ * and we should schedule a 'call me again (if I'm still
+ * alive)' to process more data.
+ */
 	  break;
 	}
       }

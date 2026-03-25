@@ -12,7 +12,7 @@ void textBufInit (textBuf_t *b) {
   b->data [b->len] = 0;
 }
 
-static make_place (textBuf_t *b, int ex) {
+static void make_place (textBuf_t *b, int ex) {
   if (b->len + ex + 2 > b->alloc_len) {
     int nl = 2 * b->alloc_len / 3 + 10;
     b->data = realloc (b->data, nl);

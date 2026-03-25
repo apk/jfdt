@@ -69,3 +69,4 @@ typedef struct textscan {
 
 void textScanInit (textScan_t *s, const char *txt);
 const char *textScanGetName (textScan_t *s);
+char *textScanGetStr (textScan_t *s);

@@ -21,6 +21,12 @@ typedef struct jfdt_fd {
   void *userdata;
 } jfdtFd_t;
 
+typedef enum {
+  jfdtFdIn = 1,
+  jfdtFdOut = 2,
+  jfdtFdPoll = 4
+} jfdtFdWhat_t;
+
 void jfdtFdInit (
   jfdtFd_t *fd, int desc,
   void (*inhdl) (jfdtFd_t *),
