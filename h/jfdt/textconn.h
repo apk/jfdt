@@ -1,4 +1,4 @@
-#include "jfdt/base.h"
+#include "base.h"
 
 typedef struct textconn {
   struct textconn *next;
