@@ -7,7 +7,7 @@
 
 #include "base.h"
 
-static void hdl (jfdtFd_t *fd) {
+static void hdl (jfdtFd_t *fd, jfdtFdWhat_t what) {
   jfdtListener_t *lstn = fd->userdata;
   struct sockaddr s;
   socklen_t len = sizeof (s);
@@ -59,7 +59,7 @@ int jfdtListenerCreateTcp (
   lstn->acpt = acpt;
   lstn->userdata = ud;
 
-  jfdtFdInit (&lstn->fd, fd, hdl, 0, lstn);
+  jfdtFdInit (&lstn->fd, fd, hdl, lstn);
   jfdtFdReqIn (&lstn->fd);
 
   return 0;

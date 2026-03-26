@@ -55,44 +55,44 @@ static void breqs (struct buf *b) {
   }
 }
 
-static void inhdl (jfdtFd_t *fd) {
+static void hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
   struct buf *b = fd->userdata;
-  int r = jfdtFdRead (fd, b->buf + b->end, sizeof (b->buf) - b->end);
-  if (r >= 0) {
-    b->end +=r;
-  } else if (r == -1) {
-    b->eof |= 1;
-  } else {
-    bkill (b);
-    return;
-  }
-  breqs (b);
-}
-
-static void outhdl (jfdtFd_t *fd) {
-  struct buf *b = fd->userdata;
-  struct buf *o = b->other;
-  if (o->end > o->start) {
-    int r = jfdtFdWrite (&b->fd, o->buf + o->start, o->end - o->start);
+  if (what & jfdtFdIn) {
+    int r = jfdtFdRead (fd, b->buf + b->end, sizeof (b->buf) - b->end);
     if (r >= 0) {
-      o->start +=r;
-      if (o->start == o->end) {
-	o->start = 0;
-	o->end = 0;
-      }
+      b->end +=r;
+    } else if (r == -1) {
+      b->eof |= 1;
     } else {
       bkill (b);
       return;
     }
     breqs (b);
-  } else if (o->eof) {
-    jfdtFdShutdown (&b->fd);
-    b->eof = 2;
+  }
+  if (what & jfdtFdOut) {
+    struct buf *o = b->other;
+    if (o->end > o->start) {
+      int r = jfdtFdWrite (&b->fd, o->buf + o->start, o->end - o->start);
+      if (r >= 0) {
+        o->start +=r;
+        if (o->start == o->end) {
+	  o->start = 0;
+	  o->end = 0;
+        }
+      } else {
+        bkill (b);
+        return;
+      }
+      breqs (b);
+    } else if (o->eof) {
+      jfdtFdShutdown (&b->fd);
+      b->eof = 2;
+    }
   }
 }
 
 static void binit (struct buf *b, int fd, struct buf *o) {
-  jfdtFdInit (&b->fd, fd, inhdl, outhdl, b);
+  jfdtFdInit (&b->fd, fd, hdlr, b);
   jfdtFdReqIn (&b->fd);
   b->start = 0;
   b->end = 0;

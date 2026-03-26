@@ -48,7 +48,7 @@ void jfdtExecAddAsyncHandler (void (*f) (void)) {
   async_handlers [nhandlers ++] = f;
 }
 
-static void fdhdl (jfdtFd_t *fd) {
+static void fdhdl (jfdtFd_t *fd, jfdtFdWhat_t what) {
   int i;
   char dummy [64];
   jfdtFdReqIn (fd);
@@ -101,7 +101,7 @@ int jfdtExecDo (jfdtExec_t *exe,
     memset (&act, 0, sizeof (act));
     act.sa_handler = sigchld;
     sigaction (SIGCHLD, &act, 0);
-    jfdtFdInit (&fd, fdpair [0], fdhdl, 0, 0);
+    jfdtFdInit (&fd, fdpair [0], fdhdl, 0);
     jfdtFdReqIn (&fd);
   }
   r = fork ();

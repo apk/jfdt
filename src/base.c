@@ -11,15 +11,13 @@ static jfdtFd_t *fd_list = 0;
 static jfdtTimer_t *timer_list = 0;
 
 void jfdtFdInit (jfdtFd_t *fd, int desc,
-  void (*inhdl) (jfdtFd_t *),
-  void (*outhdl) (jfdtFd_t *),
+  void (*hdlr) (jfdtFd_t *, jfdtFdWhat_t),
   void *userdata)
 {
   fd->next = 0;
   fd->fd = desc;
   fd->flags = 0;
-  fd->inhdl = inhdl;
-  fd->outhdl = outhdl;
+  fd->hdlr = hdlr;
   fd->userdata = userdata;
   // TODO: should probably append, and warn if already in.
   fd->next = fd_list;
@@ -199,14 +197,18 @@ void jfdtServe (void) {
       exit (5);
     }
     for (fd = fd_list; fd; fd = fd->next) {
+      jfdtFdWhat_t what = 0;
       if (FD_ISSET (fd->fd, &rfds)) {
 	fd->flags &= ~1;
-	fd->inhdl (fd);
+	what |= jfdtFdIn;
       }
       if (FD_ISSET (fd->fd, &wfds)) {
 	fd->flags &= ~2;
-	fd->outhdl (fd);
+	what |= jfdtFdOut;
       }
+      if (what) fd->hdlr (fd, what);
+      // TODO: hdlr may remove this (or any) fd from the list
+      // we're traversing - protect against that?
     }
   }
 }

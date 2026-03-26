@@ -12,25 +12,23 @@ void jfdtTraceF (const char *file, int line, const char *fmt, ...);
 
 #define jfdt_trace(fmt...) (jfdtTraceF (__FILE__, __LINE__, fmt))
 
-typedef struct jfdt_fd {
-  struct jfdt_fd *next;
-  int fd;
-  int flags;
-  void (*inhdl) (struct jfdt_fd *);
-  void (*outhdl) (struct jfdt_fd *);
-  void *userdata;
-} jfdtFd_t;
-
 typedef enum {
   jfdtFdIn = 1,
   jfdtFdOut = 2,
   jfdtFdPoll = 4
 } jfdtFdWhat_t;
 
+typedef struct jfdt_fd {
+  struct jfdt_fd *next;
+  int fd;
+  int flags;
+  void (*hdlr) (struct jfdt_fd *, jfdtFdWhat_t);
+  void *userdata;
+} jfdtFd_t;
+
 void jfdtFdInit (
   jfdtFd_t *fd, int desc,
-  void (*inhdl) (jfdtFd_t *),
-  void (*outhdl) (jfdtFd_t *),
+  void (*hdlr) (jfdtFd_t *, jfdtFdWhat_t),
   void *userdata);
 
 void jfdtFdReqIn (jfdtFd_t *);

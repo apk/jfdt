@@ -21,89 +21,93 @@ static void killconn (textConn_t *conn) {
   conn->list->fini (conn);
 }
 
-static void inhdl (jfdtFd_t *fd) {
+static void hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
   textConn_t *conn = fd->userdata;
 
-  int r, l;
-
-  // TODO: Should do this before requesting read.
-  if (conn->readpos >= conn->readalloc) {
-    int nl = 2 * conn->readalloc / 3 + 512;
-    conn->readbuf = realloc (conn->readbuf, nl);
-    conn->readalloc = nl;
-  }
-
-  l = conn->readalloc - conn->readpos;
-
-  r = jfdtFdRead (&conn->fd, conn->readbuf + conn->readpos, l);
-  if (r == -1) {
-    killconn (conn);
-    return;
-  }
-  if (r < 0) {
-    killconn (conn);
-    return;
-  }
-  conn->readpos += r;
-
-  for (r = 0; r < conn->readpos; r ++) {
-    textScan_t S;
-    const char *cmd;
-    if (conn->readbuf [r] != '\n') continue;
-    /* Line end here, use line */
-    conn->readbuf [r] = 0;
-    textScanInit (&S, conn->readbuf);
-    cmd = textScanGetName (&S);
-    if (cmd) {
-      /* Got a command (otherwise the line is garbage) */
-      struct textconncmd *ce;
-      for (ce = conn->list->cmdtable; ce->name; ce ++) {
-	if (!strcmp (ce->name, cmd)) {
-	  /* Have command, handle */
-	  printf ("Have command (%s)...\n", cmd);
-	  ce->handler (conn, cmd, S.str);
-/* TODO: We should return to not execute the ReqIn then,
- * and we should schedule a 'call me again (if I'm still
- * alive)' to process more data.
- */
-	  break;
-	}
+  if (what & jfdtFdOut) {
+    struct textconn_data *wd = conn->writedata;
+    if (wd) {
+      int r = jfdtFdWrite (&conn->fd, wd->buf + conn->writepos, wd->len - conn->writepos);
+      if (r < 0) {
+        killconn (conn);
+        return;
       }
-      if (!ce->name) {
-	/* Unknown command, error out */
-	printf ("Bad command (%s)...\n", conn->readbuf);
+      if (r == 0) {
+        killconn (conn);
+        return;
+      }
+      conn->writepos += r;
+      if (conn->writepos >= wd->len) {
+        conn->writedata = wd->next;
+        conn->writepos = 0;
+        free (wd);
+      }
+      if (conn->writedata) {
+        jfdtFdReqOut (&conn->fd);
       }
     }
-    if (r + 1 < conn->readpos) {
-      memmove (conn->readbuf, conn->readbuf + r + 1, conn->readpos - r - 1);
-    }
-    conn->readpos -= r + 1;
   }
-  jfdtFdReqIn (&conn->fd);
-}
 
-static void outhdl (jfdtFd_t *fd) {
-  textConn_t *conn = fd->userdata;
-  struct textconn_data *wd = conn->writedata;
-  if (wd) {
-    int r = jfdtFdWrite (&conn->fd, wd->buf + conn->writepos, wd->len - conn->writepos);
+  if (what & jfdtFdIn) {
+    int r, l;
+
+    // TODO: Should do this before requesting read.
+   if (conn->readpos >= conn->readalloc) {
+      int nl = 2 * conn->readalloc / 3 + 512;
+      conn->readbuf = realloc (conn->readbuf, nl);
+      conn->readalloc = nl;
+    }
+
+    l = conn->readalloc - conn->readpos;
+
+    r = jfdtFdRead (&conn->fd, conn->readbuf + conn->readpos, l);
+    if (r == -1) {
+      killconn (conn);
+      return;
+    }
     if (r < 0) {
       killconn (conn);
       return;
-    } 
-    if (r == 0) {
-      killconn (conn);
-      return;
     }
-    conn->writepos += r;
-    if (conn->writepos >= wd->len) {
-      conn->writedata = wd->next;
-      conn->writepos = 0;
-      free (wd);
+    conn->readpos += r;
+
+    for (r = 0; r < conn->readpos; r ++) {
+      textScan_t S;
+      const char *cmd;
+      if (conn->readbuf [r] != '\n') continue;
+      /* Line end here, use line */
+      conn->readbuf [r] = 0;
+      textScanInit (&S, conn->readbuf);
+      cmd = textScanGetName (&S);
+      if (cmd) {
+	/* Got a command (otherwise the line is garbage) */
+	struct textconncmd *ce;
+        for (ce = conn->list->cmdtable; ce->name; ce ++) {
+	  if (!strcmp (ce->name, cmd)) {
+	    /* Have command, handle */
+	    printf ("Have command (%s)...\n", cmd);
+	    ce->handler (conn, cmd, S.str);
+	    /* TODO: We should return to not execute the ReqIn then,
+	     * and we should schedule a 'call me again (if I'm still
+	     * alive)' to process more data.
+	     */
+	    break;
+	  }
+        }
+        if (!ce->name) {
+	  /* Unknown command, error out */
+	  printf ("Bad command (%s)...\n", conn->readbuf);
+        }
+      }
+      /* TODO: This is going to be interesting to do before calling the handler;
+       * perhaps we need an explicit procpos to postpone the move.
+       */
+      if (r + 1 < conn->readpos) {
+        memmove (conn->readbuf, conn->readbuf + r + 1, conn->readpos - r - 1);
+      }
+      conn->readpos -= r + 1;
     }
-    if (conn->writedata) {
-      jfdtFdReqOut (&conn->fd);
-    }
+    jfdtFdReqIn (&conn->fd);
   }
 }
 
@@ -119,7 +123,7 @@ void textConnListAdd (textConnList_t *list, textConn_t *conn, int fd, void *user
   conn->readbuf = 0;
   conn->readalloc = 0;
 
-  jfdtFdInit(&conn->fd, fd, inhdl, outhdl, conn);
+  jfdtFdInit(&conn->fd, fd, hdlr, conn);
   // TODO: Should request with buffer space only.
   jfdtFdReqIn (&conn->fd);
 }
