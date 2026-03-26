@@ -1,18 +1,18 @@
-typedef struct lineio {
+typedef struct jfdt_lineio {
   jfdtFd_t fd;
 
   char *readbuf;
   int readpos;
   int readalloc;
 
-  struct lineio_data {
+  struct jfdt_lineio_data {
     int len;
-    struct lineio_data *next;
+    struct jfdt_lineio_data *next;
     char buf [1];
   } *writedata;
   int writepos;
 
-  void (*proc) (struct lineio *io, char *data);
+  void (*proc) (struct jfdt_lineio *io, char *data);
 
   void *userdata;
-} lineIo_t;
+} jfdtLineIo_t;

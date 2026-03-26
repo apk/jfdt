@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void killconn (textConn_t *conn) {
-  struct textconn_data *d;
-  struct textconn **pp;
+static void killconn (jfdtTextConn_t *conn) {
+  struct jfdt_textconn_data *d;
+  struct jfdt_textconn **pp;
   for (pp = &conn->list->conns; *pp; pp = &(*pp)->next) {
     if (*pp == conn) {
       *pp = conn->next;
@@ -22,10 +22,10 @@ static void killconn (textConn_t *conn) {
 }
 
 static void hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
-  textConn_t *conn = fd->userdata;
+  jfdtTextConn_t *conn = fd->userdata;
 
   if (what & jfdtFdOut) {
-    struct textconn_data *wd = conn->writedata;
+    struct jfdt_textconn_data *wd = conn->writedata;
     if (wd) {
       int r = jfdtFdWrite (&conn->fd, wd->buf + conn->writepos, wd->len - conn->writepos);
       if (r < 0) {
@@ -81,7 +81,7 @@ static void hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
       cmd = textScanGetName (&S);
       if (cmd) {
 	/* Got a command (otherwise the line is garbage) */
-	struct textconncmd *ce;
+	struct jfdt_textconncmd *ce;
         for (ce = conn->list->cmdtable; ce->name; ce ++) {
 	  if (!strcmp (ce->name, cmd)) {
 	    /* Have command, handle */
@@ -111,8 +111,8 @@ static void hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
   }
 }
 
-void textConnListAdd (textConnList_t *list, textConn_t *conn, int fd, void *userdata) {
-  // TODO: API: We expect an allocated textConn_t here - good?
+void jfdtTextConnListAdd (jfdtTextConnList_t *list, jfdtTextConn_t *conn, int fd, void *userdata) {
+  // TODO: API: We expect an allocated jfdtTextConn_t here - good?
   conn->list = list;
   conn->userdata = userdata;
 
@@ -128,18 +128,18 @@ void textConnListAdd (textConnList_t *list, textConn_t *conn, int fd, void *user
   jfdtFdReqIn (&conn->fd);
 }
 
-void textConnListInit (textConnList_t *list, const char *name,
-		       void (*fini) (textConn_t *conn),
-		       textConnCmd_t *cmdtable)
+void jfdtTextConnListInit (jfdtTextConnList_t *list, const char *name,
+			   void (*fini) (jfdtTextConn_t *conn),
+			   jfdtTextConnCmd_t *cmdtable)
 {
   list->conns = 0;
   list->fini = fini;
   list->cmdtable = cmdtable;
 }
 
-void textConnSend (textConn_t *conn, const char *msg) {
+void jfdtTextConnSend (jfdtTextConn_t *conn, const char *msg) {
   int l = strlen (msg);
-  struct textconn_data **dp, *d = malloc (sizeof (struct textconn) + l);
+  struct jfdt_textconn_data **dp, *d = malloc (sizeof (struct jfdt_textconn) + l);
   strcpy (d->buf, msg);
   d->buf [l] = '\n'; // TODO: Separator hacking.
   d->len = l + 1;
@@ -149,14 +149,14 @@ void textConnSend (textConn_t *conn, const char *msg) {
   jfdtFdReqOut (&conn->fd);
 }
 
-void textConnListSendToPredicated (textConnList_t *list,
-				   const char *msg,
-				   int (*pred) (textConn_t *conn, void *ud),
-				   void *ud) {
-  textConn_t *conn;
+void jfdtTextConnListSendToPredicated (jfdtTextConnList_t *list,
+				       const char *msg,
+				       int (*pred) (jfdtTextConn_t *conn, void *ud),
+				       void *ud) {
+  jfdtTextConn_t *conn;
   for (conn = list->conns; conn; conn = conn->next) {
     if (pred (conn, ud)) {
-      textConnSend (conn, msg);
+      jfdtTextConnSend (conn, msg);
     }
   }
 }

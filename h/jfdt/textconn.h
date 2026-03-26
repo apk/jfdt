@@ -1,57 +1,57 @@
 #include "base.h"
 
-typedef struct textconn {
-  struct textconn *next;
-  struct textconnlist *list;
+typedef struct jfdt_textconn {
+  struct jfdt_textconn *next;
+  struct jfdt_textconnlist *list;
   jfdtFd_t fd;
 
   char *readbuf;
   int readpos;
   int readalloc;
 
-  struct textconn_data {
+  struct jfdt_textconn_data {
     int len;
-    struct textconn_data *next;
+    struct jfdt_textconn_data *next;
     char buf [1];
   } *writedata;
   int writepos;
 
   void *userdata;
-} textConn_t;
+} jfdtTextConn_t;
 
-typedef struct textconnlist {
-  struct textconn *conns;
-  void (*fini) (struct textconn *);
-  struct textconncmd *cmdtable;
+typedef struct jfdt_textconnlist {
+  struct jfdt_textconn *conns;
+  void (*fini) (struct jfdt_textconn *);
+  struct jfdt_textconncmd *cmdtable;
   void *userdata;
-} textConnList_t;
+} jfdtTextConnList_t;
 
 #define TEXTCONN_CMD_HDLR(x) \
-  void (x) (textConn_t *conn, const char *cmd, const char *args) /* TODO: Should be a command context, for tagging */
+  void (x) (jfdtTextConn_t *conn, const char *cmd, const char *args) /* TODO: Should be a command context, for tagging */
 
 #define TEXTCONN_CMD_FAIL(x) \
   /* TODO: Send back a failure code, on what is visible as 'conn' */
 
-void textConnSend (textConn_t *conn, const char *msg);
+void jfdtTextConnSend (jfdtTextConn_t *conn, const char *msg);
 
-void textConnListAdd (textConnList_t *list, textConn_t *conn, int fd, void *userdata);
+void jfdtTextConnListAdd (jfdtTextConnList_t *list, jfdtTextConn_t *conn, int fd, void *userdata);
 
-typedef struct textconncmd {
+typedef struct jfdt_textconncmd {
   char *name;
   TEXTCONN_CMD_HDLR(*handler);
   char *help;
-} textConnCmd_t;
+} jfdtTextConnCmd_t;
 
-void textConnListInit (textConnList_t *list, const char *name,
-		       void (*fini) (textConn_t *conn),
-		       textConnCmd_t *cmdtable);
+void jfdtTextConnListInit (jfdtTextConnList_t *list, const char *name,
+			   void (*fini) (jfdtTextConn_t *conn),
+			   jfdtTextConnCmd_t *cmdtable);
 
-void textConnListSendToPredicated (textConnList_t *list,
-				   const char *msg,
-				   int (*pred) (textConn_t *conn, void *ud),
-				   void *ud);
+void jfdtTextConnListSendToPredicated (jfdtTextConnList_t *list,
+				       const char *msg,
+				       int (*pred) (jfdtTextConn_t *conn, void *ud),
+				       void *ud);
 
-typedef struct textbuf {
+typedef struct jfdt_textbuf {
   char *data;
   int alloc_len;
   int len;
@@ -63,7 +63,7 @@ void textBufAddString (textBuf_t *b, char *str);
 void textBufAddAsgnInt (textBuf_t *b, char *name, int val);
 char *textBufFini (textBuf_t *b);
 
-typedef struct textscan {
+typedef struct jfdt_textscan {
   const char *str;
 } textScan_t;
 
