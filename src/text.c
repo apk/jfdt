@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdlib.h>
 
 void textBufInit (textBuf_t *b) {
   b->alloc_len = 80;

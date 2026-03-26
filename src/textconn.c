@@ -139,7 +139,7 @@ void jfdtTextConnListInit (jfdtTextConnList_t *list, const char *name,
 
 void jfdtTextConnSend (jfdtTextConn_t *conn, const char *msg) {
   int l = strlen (msg);
-  struct jfdt_textconn_data **dp, *d = malloc (sizeof (struct jfdt_textconn) + l);
+  struct jfdt_textconn_data **dp, *d = malloc (sizeof (struct jfdt_textconn_data) + l);
   strcpy (d->buf, msg);
   d->buf [l] = '\n'; // TODO: Separator hacking.
   d->len = l + 1;
