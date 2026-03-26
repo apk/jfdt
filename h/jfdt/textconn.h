@@ -1,21 +1,10 @@
 #include "base.h"
+#include "lineio.h"
 
 typedef struct jfdt_textconn {
   struct jfdt_textconn *next;
   struct jfdt_textconnlist *list;
-  jfdtFd_t fd;
-
-  char *readbuf;
-  int readpos;
-  int readalloc;
-
-  struct jfdt_textconn_data {
-    int len;
-    struct jfdt_textconn_data *next;
-    char buf [1];
-  } *writedata;
-  int writepos;
-
+  jfdtLineIo_t io;
   void *userdata;
 } jfdtTextConn_t;
 
