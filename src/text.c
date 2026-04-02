@@ -67,6 +67,7 @@ void textBufAddAsgnInt (textBuf_t *b, char *name, int val) {
 }
 
 char *textBufFini (textBuf_t *b) {
+  b->data [b->len] = 0;
   return b->data;
 }
 
