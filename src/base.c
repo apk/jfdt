@@ -101,6 +101,11 @@ void jfdtTimeAddSecs (jfdtTime_t *t, int s) {
   t->tv_sec += s;
 }
 
+void jfdtTimeAddMillis (jfdtTime_t *t, int ms) {
+  t->tv_sec += ms / 1000;
+  t->tv_usec += ms % 1000;
+}
+
 void jfdtTimeSub (jfdtTime_t *t, jfdtTime_t b) {
   t->tv_sec -= b.tv_sec;
   if (t->tv_usec < b.tv_usec) {

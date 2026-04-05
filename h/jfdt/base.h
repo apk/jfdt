@@ -58,6 +58,7 @@ typedef struct timeval jfdtTime_t;
 extern int jfdtTimeLessThan (jfdtTime_t, jfdtTime_t);
 extern void jfdtTimeAddFrac (jfdtTime_t *, int n, int d);
 extern void jfdtTimeAddSecs (jfdtTime_t *, int s);
+extern void jfdtTimeAddMillis (jfdtTime_t *, int ms);
 extern void jfdtTimeSub (jfdtTime_t *, jfdtTime_t);
 
 typedef struct jfdt_timer {

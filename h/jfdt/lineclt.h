@@ -1,11 +1,12 @@
 #include "jfdt/base.h"
+#include "jfdt/lineio.h"
 
 typedef struct jfdt_lineclt {
   char *host;
   int port;
   jfdtLineIo_t io;
   union {
-    timeout_t t;
+    jfdtTimer_t t;
     connect_t c;
   };
 
