@@ -1,24 +1,32 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
 #include "base.h"
 
-static jfdtFd_t *fd_list = 0;
+static jfdtFd_t *fd_list = 0, *fd_backlist = 0;
 static jfdtTimer_t *timer_list = 0;
 
 void jfdtFdInit (jfdtFd_t *fd, int desc,
   void (*hdlr) (jfdtFd_t *, jfdtFdWhat_t),
   void *userdata)
 {
+  jfdtFd_t *o;
   fd->next = 0;
   fd->fd = desc;
   fd->flags = 0;
   fd->hdlr = hdlr;
   fd->userdata = userdata;
+  for (o = fd_list; o; o = o->next) {
+    jfdt_assert (o != fd);
+  }
+  for (o = fd_backlist; o; o = o->next) {
+    jfdt_assert (o != fd);
+  }
   // TODO: should probably append, and warn if already in.
   fd->next = fd_list;
   fd_list = fd;
@@ -37,8 +45,14 @@ void jfdtFdFini (jfdtFd_t *fd) {
   jfdtFd_t **pp, *p;
   for (pp = &fd_list; (p = *pp); pp = &p->next) {
     if (fd == p) {
-      p->next = fd->next;
-      break;
+      *pp = fd->next;
+      return;
+    }
+  }
+  for (pp = &fd_backlist; (p = *pp); pp = &p->next) {
+    if (fd == p) {
+      *pp = fd->next;
+      return;
     }
   }
 }
@@ -129,10 +143,11 @@ void jfdtTimerUnset (jfdtTimer_t *t) {
     for (pp = &timer_list; (p = *pp); pp = &p->next) {
       if (p == t) {
 	*pp = t->next;
+	t->next = t;
 	return;
       }
     }
-    jfdt_trace ("timer: unset: oops");
+    jfdt_trace0 ("timer: unset: oops");
     sleep (3);
   }
 }
@@ -174,7 +189,7 @@ void jfdtServe (void) {
       t->f (t, now);
     }
     if (p) {
-      jfdt_trace("T:%d.%d", (int)p->tv_sec, (int)p->tv_usec);
+      jfdt_trace3 ("T:%d.%d", (int)p->tv_sec, (int)p->tv_usec);
     }
     FD_ZERO (&rfds);
     FD_ZERO (&wfds);
@@ -184,36 +199,42 @@ void jfdtServe (void) {
 	  n = fd->fd + 1;
 	}
 	if (fd->flags & 1) {
-	  jfdt_trace ("R:%d", fd->fd);
+	  jfdt_trace3 ("R:%d", fd->fd);
 	  FD_SET (fd->fd, &rfds);
 	}
 	if (fd->flags & 2) {
-	  jfdt_trace ("W:%d", fd->fd);
+	  jfdt_trace3 ("W:%d", fd->fd);
 	  FD_SET (fd->fd, &wfds);
 	}
       }
     }
-    jfdt_trace ("N:%d", n);
+    jfdt_trace3 ("N:%d", n);
     r = select (n, &rfds, &wfds, 0, p);
-    jfdt_trace (" :%d", r);
+    jfdt_trace3 (" :%d", r);
     if (r == -1) {
       if (errno == EINTR) continue;
-      jfdt_trace ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
+      jfdt_trace2 ("select failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
       exit (5);
     }
-    for (fd = fd_list; fd; fd = fd->next) {
+    fd_backlist = fd_list;
+    fd_list = 0;
+    while ((fd = fd_backlist)) {
       jfdtFdWhat_t what = 0;
+      fd_backlist = fd->next;
+      fd->next = fd_list;
+      fd_list = fd;
+
       if (FD_ISSET (fd->fd, &rfds)) {
+	jfdt_trace3 ("r:%d", fd->fd);
 	fd->flags &= ~1;
 	what |= jfdtFdIn;
       }
       if (FD_ISSET (fd->fd, &wfds)) {
+	jfdt_trace3 ("w:%d", fd->fd);
 	fd->flags &= ~2;
 	what |= jfdtFdOut;
       }
       if (what) fd->hdlr (fd, what);
-      // TODO: hdlr may remove this (or any) fd from the list
-      // we're traversing - protect against that?
     }
   }
 }

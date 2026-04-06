@@ -1,4 +1,5 @@
 #include "textconn.h"
+#include "textbuf.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +41,7 @@ static void killconn (jfdtTextConn_t *conn) {
       break;
     }
   }
-  jifdtLineIoFini (&conn->io);
+  jfdtLineIoFini (&conn->io);
   conn->list->fini (conn);
 }
 

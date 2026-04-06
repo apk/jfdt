@@ -21,15 +21,22 @@ const char *jfdtErrorString (int e) {
   return "the-error";
 }
 
-void jfdtTraceF (const char *file, int line, const char *fmt, ...) {
-#if 0
+int jfdt_tracelvl = 0;
+
+void jfdtTraceF (int lvl, const char *file, int line, const char *fmt, ...) {
   va_list ap;
-  va_start (ap, fmt);
-  fprintf (stderr, "%s:%d: ", file, line);
-  vfprintf (stderr, fmt, ap);
-  fprintf (stderr, "\n");
-  va_end (ap);
-  fflush (stderr);
-#endif
+  if (jfdt_tracelvl >= lvl) {
+    va_start (ap, fmt);
+    fprintf (stderr, "%s:%d: ", file, line);
+    vfprintf (stderr, fmt, ap);
+    fprintf (stderr, "\n");
+    va_end (ap);
+    fflush (stderr);
+  }
 }
 
+void jfdtTrap (const char *file, int line) {
+  fprintf (stderr, "Assert failed at %s:%d\n", file, line);
+  fflush (stderr);
+  *(char*)0=0;
+}

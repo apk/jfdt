@@ -24,6 +24,6 @@ void jfdtLineIoInit (jfdtLineIo_t *io, int fd,
 		     void (*proc) (jfdtLineIo_t *io, char *data),
 		     void (*err) (jfdtLineIo_t *io, const char *msg),
 		     void *userdata);
-void jifdtLineIoFini (jfdtLineIo_t *io);
+void jfdtLineIoFini (jfdtLineIo_t *io);
 
 void jfdtLineIoSend (jfdtLineIo_t *io, const char *msg);

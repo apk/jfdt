@@ -11,7 +11,7 @@ static void set_timer () {
 }
 
 static void term (jfdtExec_t *exe, int status) {
-  jfdt_trace ("status %x", status);
+  jfdt_trace0 ("status %x", status);
   set_timer ();
 }
 
@@ -25,10 +25,10 @@ static char *args [] = {
 static void fire (jfdtTimer_t *to, jfdtTime_t now) {
   int r = jfdtExecDo (&exec, term, 0, 0, args, 0, 0, 0);
   if (r == -1) {
-    jfdt_trace ("oops");
+    jfdt_trace0 ("oops");
     exit (1);
   }
-  jfdt_trace ("pid: %d", r);
+  jfdt_trace0 ("pid: %d", r);
 }
 
 int main (int argc, char **argv) {

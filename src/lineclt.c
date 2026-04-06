@@ -1,6 +1,7 @@
 #include "lineclt.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #include "base.h"
 #include "sock.h"
@@ -15,6 +16,7 @@ static void lineclt_tmr (jfdtTimer_t *t, jfdtTime_t now) {
 
   fd = jfdtOpenTcp (clt->host, clt->port);
   if (fd < 0) {
+    printf ("Direct restart\n");
     lineclt_set_timer (clt);
     return;
   }
@@ -27,17 +29,19 @@ static void lineclt_tmr (jfdtTimer_t *t, jfdtTime_t now) {
 
 static void lineclt_set_timer (jfdtLineClt_t *clt) {
   jfdtTime_t delay = jfdtGetTime ();
-  jfdtTimeAddSecs (&delay, 30);
+  jfdtTimeAddMillis (&delay, clt->delay);
   jfdtTimerInit (&clt->t, lineclt_tmr, clt);
   jfdtTimerSet (&clt->t, delay);
 }
 
 void jfdtLineCltInit (jfdtLineClt_t *clt, const char *host, int port,
-                      void (*proc) (jfdtLineClt_t *clt, char *data),
-                      void (*stat) (jfdtLineClt_t *clt, char *err),
+		      int delay,
+                      void (*proc) (jfdtLineClt_t *clt, const char *data),
+                      void (*stat) (jfdtLineClt_t *clt, const char *err),
                       void *userdata) {
   clt->host = host;
   clt->port = port;
+  clt->delay = delay > 0 ? delay : 30000;
   clt->proc = proc;
   clt->stat = stat;
   clt->userdata = userdata;
@@ -52,7 +56,7 @@ void jfdtLineCltFini (jfdtLineClt_t *clt) {
     jfdtTimerUnset (&clt->t);
     break;
   case jfdtLineClt_connected:
-    jifdtLineIoFini (&clt->io);
+    jfdtLineIoFini (&clt->io);
     break;
   }
 }
@@ -75,11 +79,9 @@ static void lineclt_io_proc (jfdtLineIo_t *io, char *data) {
 static void lineclt_io_err (jfdtLineIo_t *io, const char *msg) {
   jfdtLineClt_t *clt = io->userdata;
 
-  (void)msg;
-
-  jifdtLineIoFini (&clt->io);
+  jfdtLineIoFini (&clt->io);
   clt->state = jfdtLineClt_waiting;
 
   lineclt_set_timer (clt);
-  clt->stat (clt, "closed");
+  clt->stat (clt, msg ? msg : "?err");
 }

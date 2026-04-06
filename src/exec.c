@@ -29,7 +29,7 @@ static void sigchld (int n) {
 }
 
 static void stray (int pid, int status) {
-  jfdt_trace ("stray wait: %d %x", pid, status);
+  jfdt_trace0 ("stray wait: %d %x", pid, status);
 }
 
 static void (*stray_hdlr) (int pid, int status) = stray;
@@ -52,7 +52,6 @@ static void fdhdl (jfdtFd_t *fd, jfdtFdWhat_t what) {
   int i;
   char dummy [64];
   jfdtFdReqIn (fd);
-  jfdt_trace ("fdhdl...");
   while (read (fdpair [0], dummy, sizeof (dummy)) > 0);
   while (1) {
     jfdtExec_t *exe, **pp;
@@ -60,7 +59,7 @@ static void fdhdl (jfdtFd_t *fd, jfdtFdWhat_t what) {
     int r = waitpid (-1, &status, WNOHANG);
     if (r == 0) break;
     if (r == -1) break;
-    jfdt_trace ("pid: %d", r);
+    jfdt_trace0 ("pid: %d", r);
     for (pp = &execlist; ; pp = &exe->next) {
       if (!(exe = *pp)) {
 	stray_hdlr (r, status);
@@ -88,14 +87,14 @@ int jfdtExecDo (jfdtExec_t *exe,
 		void *xud) {
   int r;
   exe->userdata = userdata;
-  jfdt_trace ("pair - %d, %d", fdpair [0], fdpair [1]);
+  jfdt_trace3 ("pair - %d, %d", fdpair [0], fdpair [1]);
   if (fdpair [0] == -1) {
     static struct sigaction act;
     static jfdtFd_t fd;
     if (pipe (fdpair) == -1) {
       return -1;
     }
-    jfdt_trace ("pair + %d, %d", fdpair [0], fdpair [1]);
+    jfdt_trace3 ("pair + %d, %d", fdpair [0], fdpair [1]);
     setnb (fdpair [0]);
     setnb (fdpair [1]);
     memset (&act, 0, sizeof (act));

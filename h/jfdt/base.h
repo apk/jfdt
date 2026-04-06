@@ -8,9 +8,16 @@ extern int jfdtDebugLevel;
 
 void jfdtServe (void);
 
-void jfdtTraceF (const char *file, int line, const char *fmt, ...);
+void jfdtTraceF (int lvl, const char *file, int line, const char *fmt, ...);
+void jfdtTrap (const char *file, int line);
 
-#define jfdt_trace(fmt...) (jfdtTraceF (__FILE__, __LINE__, fmt))
+#define jfdt_trace0(fmt...) (jfdtTraceF (0, __FILE__, __LINE__, fmt))
+#define jfdt_trace1(fmt...) (jfdtTraceF (1, __FILE__, __LINE__, fmt))
+#define jfdt_trace2(fmt...) (jfdtTraceF (2, __FILE__, __LINE__, fmt))
+#define jfdt_trace3(fmt...) (jfdtTraceF (3, __FILE__, __LINE__, fmt))
+#define jfdt_assert(cond) ((cond) || (jfdtTrap(__FILE__, __LINE__),0))
+
+extern int jfdt_tracelvl;
 
 typedef enum {
   jfdtFdIn = 1,

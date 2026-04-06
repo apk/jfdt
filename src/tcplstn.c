@@ -13,7 +13,7 @@ static void hdl (jfdtFd_t *fd, jfdtFdWhat_t what) {
   socklen_t len = sizeof (s);
   int r = accept (fd->fd, &s, &len);
   if (r == -1) {
-    jfdt_trace ("accept failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
+    jfdt_trace0 ("accept failed: %s", jfdtErrorString (jfdtErrnoMap (errno)));
     // TODO: what now?
     return;
   }
@@ -36,7 +36,7 @@ int jfdtListenerCreateTcp (
 
   r = setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof (one));
   if (r == -1) {
-    jfdt_trace ("reuse failed");
+    jfdt_trace0 ("reuse failed");
   }
 
   memset (&sin, 0, sizeof (sin));

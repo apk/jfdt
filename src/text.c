@@ -1,4 +1,5 @@
 #include "textconn.h"
+#include "textbuf.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +22,7 @@ static void make_place (textBuf_t *b, int ex) {
 
 static char hexdig [] = "0123456789abcdef";
 
-void textBufAddName (textBuf_t *b, char *str) {
+void textBufAddName (textBuf_t *b, const char *str) {
   int cnt = 0;
   make_place (b, 3 * strlen (str));
   if (b->len > 0) b->data [b->len ++] = ' ';
@@ -40,7 +41,7 @@ void textBufAddName (textBuf_t *b, char *str) {
   b->data [b->len] = 0;
 }
 
-void textBufAddString (textBuf_t *b, char *str) {
+void textBufAddString (textBuf_t *b, const char *str) {
   make_place (b, 3 * strlen (str) + 2);
   if (b->len > 0) b->data [b->len ++] = ' ';
   b->data [b->len ++] = '"';
@@ -59,10 +60,10 @@ void textBufAddString (textBuf_t *b, char *str) {
   b->data [b->len] = 0;
 }
 
-void textBufAddAsgnInt (textBuf_t *b, char *name, int val) {
+void textBufAddLabelInt (textBuf_t *b, const char *name, int val) {
   textBufAddName (b, name);
   make_place (b, 30);
-  sprintf (b->data + b->len, "=%d", val);
+  sprintf (b->data + b->len, ": %d", val);
   b->len = strlen (b->data);
 }
 
@@ -75,9 +76,21 @@ void textScanInit (textScan_t *s, const char *txt) {
   s->str = txt;
 }
 
+static int isspc (char c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+static int isspx (char c) {
+  return isspc (c) || c == 0;
+}
+
 static const char *ignb (const char *s) {
-  while (*s == ' ' || *s == '\t') s ++;
+  while (isspc (*s)) s ++;
   return s;
+}
+
+static int isal (char c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
 struct uniq {
@@ -101,13 +114,64 @@ static const char *uniqq (const char *b, const char *e) {
   return u->buf;
 }
 
+int textScanIsName (textScan_t *s, const char *n) {
+  const char *p = ignb (s->str);
+  const char *b = p;
+  while (*n) {
+    if (*n != *p) {
+      return 0;
+    }
+    n ++;
+    p ++;
+  }
+  if (isspx (*p)) {
+    s->str = p;
+    return 1;
+  }
+  return 0;
+}
+
 const char *textScanGetName (textScan_t *s) {
   const char *p = ignb (s->str);
   const char *b = p;
-  while ((*p >= 'a' && *p <= 'z') || *p == '_') p ++;
-  if (p > b) {
-    s->str = p;
-    return uniqq (b, p);
+  if (isal (*p)) {
+    p ++;
+    while (isal (*p) || (*p >= '0' && *p <= '9') || *p == '_' || *p == '-' || *p == '/') p ++;
+    if (isspx (*p)) {
+      s->str = p;
+      return uniqq (b, p);
+    }
+  }
+  return 0;
+}
+
+const char *textScanGetLabel (textScan_t *s) {
+  const char *p = ignb (s->str);
+  const char *b = p;
+  if (isal (*p)) {
+    p ++;
+    while (isal (*p) || (*p >= '0' && *p <= '9') || *p == '_' || *p == '-' || *p == '/') p ++;
+    if (*p == ':') {
+      s->str = p + 1;
+      return uniqq (b, p);
+    }
+  }
+  return 0;
+}
+
+int textScanIsEnd (textScan_t *s) {
+  const char *p = ignb (s->str);
+return *p == 0;
+}
+
+int textScanGetInt (textScan_t *s, int *v) {
+  const char *p = ignb (s->str);
+  char *e = p;
+  long r = strtol (p, &e, 10);
+  if (e > p && isspx (*e)) {
+    *v = r;
+    s->str = e;
+    return 1;
   }
   return 0;
 }
@@ -118,14 +182,13 @@ char *textScanGetStr (textScan_t *s) {
   textBufInit (&B);
   if (*p ++ != '"') return 0;
   while (*p) {
-    // TODO: Handle ` sequences
+    // TODO: Handle ` sequences - or any escapes?
     if (*p == '"') {
       s->str = p + 1;
       return textBufFini (&B);
     }
     make_place (&B, 1);
     B.data [B.len ++] = *p ++;
-    printf ("C(%c)\n", p [-1]);
   }
   free (textBufFini (&B));
   return 0;

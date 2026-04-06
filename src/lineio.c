@@ -14,13 +14,13 @@ static void lineio_hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
     if (wd) {
       int r = jfdtFdWrite (&io->fd, wd->buf + io->writepos, wd->len - io->writepos);
       if (r < 0) {
-        if (io->err) io->err (io, "write error");
         jfdtFdClose (&io->fd);
+        io->err (io, "write error");
         return;
       }
       if (r == 0) {
-        if (io->err) io->err (io, "write eof");
         jfdtFdClose (&io->fd);
+        io->err (io, "write eof");
         return;
       }
       io->writepos += r;
@@ -48,7 +48,7 @@ static void lineio_hdlr (jfdtFd_t *fd, jfdtFdWhat_t what) {
 
     r = jfdtFdRead (&io->fd, io->readbuf + io->readpos, l);
     if (r <= 0) {
-      if (io->err) io->err (io, r < 0 ? "read error" : "read eof");
+      io->err (io, r < 0 ? "read error" : "read eof");
       jfdtFdClose (&io->fd);
       return;
     }
@@ -85,7 +85,7 @@ void jfdtLineIoInit (jfdtLineIo_t *io, int fd,
   jfdtFdReqIn (&io->fd);
 }
 
-void jifdtLineIoFini (jfdtLineIo_t *io) {
+void jfdtLineIoFini (jfdtLineIo_t *io) {
   jfdtFdFini (&io->fd);
   while (io->writedata) {
     struct jfdt_lineio_data *d = io->writedata;

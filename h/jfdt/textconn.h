@@ -39,23 +39,3 @@ void jfdtTextConnListSendToPredicated (jfdtTextConnList_t *list,
 				       const char *msg,
 				       int (*pred) (jfdtTextConn_t *conn, void *ud),
 				       void *ud);
-
-typedef struct jfdt_textbuf {
-  char *data;
-  int alloc_len;
-  int len;
-} textBuf_t;
-
-void textBufInit (textBuf_t *b);
-void textBufAddName (textBuf_t *b, char *name);
-void textBufAddString (textBuf_t *b, char *str);
-void textBufAddAsgnInt (textBuf_t *b, char *name, int val);
-char *textBufFini (textBuf_t *b);
-
-typedef struct jfdt_textscan {
-  const char *str;
-} textScan_t;
-
-void textScanInit (textScan_t *s, const char *txt);
-const char *textScanGetName (textScan_t *s);
-char *textScanGetStr (textScan_t *s);

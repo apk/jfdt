@@ -11,5 +11,7 @@ done
 
 ar rc .obj/jfdt.a .obj/o/*.o || exit 1
 
-gcc -Wall -g -o .obj/tcproxy -I h examples/simple/tcproxy.c .obj/jfdt.a
-gcc -Wall -g -o .obj/regexec -I h examples/simple/regexec.c .obj/jfdt.a
+for i in examples/simple/*.c; do
+    b="`basename $i .c`"
+    gcc -Wall -g -o .obj/"$b" -I h "$i" .obj/jfdt.a || exit 1
+done

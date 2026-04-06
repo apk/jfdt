@@ -25,7 +25,7 @@ static void bkillone (struct buf *b) {
 
 static void bkill (struct buf *b) {
   struct buf *o = b->other;
-  jfdt_trace ("bkill");
+  jfdt_trace0 ("bkill");
   bkillone (b);
   if (o != b) {
     bkillone (o);
@@ -105,7 +105,7 @@ static void acpt (jfdtListener_t *l, int fd, void *addr, int adsize) {
 #if 0
   int fd2 = jfdtOpenTcp ("localhost", 6601);
   if (fd2 < 0) {
-    jfdt_trace ("Closing %d", fd);
+    jfdt_trace0 ("Closing %d", fd);
     jfdtCloseFd (fd);
     return;
   }
@@ -124,10 +124,10 @@ int main () {
 
   int r = jfdtListenerCreateTcp (&lstn, acpt, 0, 6600);
   if (r < 0) {
-    jfdt_trace ("Failed to create listener: %s", jfdtErrorString (r));
+    jfdt_trace0 ("Failed to create listener: %s", jfdtErrorString (r));
     exit (1);
   }
-  jfdt_trace ("main loop");
+  jfdt_trace0 ("main loop");
 
   jfdtServe ();
   return 0;
