@@ -16,7 +16,6 @@ static void lineclt_tmr (jfdtTimer_t *t, jfdtTime_t now) {
 
   fd = jfdtOpenTcp (clt->host, clt->port);
   if (fd < 0) {
-    printf ("Direct restart\n");
     lineclt_set_timer (clt);
     return;
   }

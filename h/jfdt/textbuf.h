@@ -6,6 +6,7 @@ typedef struct jfdt_textbuf {
 } textBuf_t;
 
 void textBufInit (textBuf_t *b);
+void textBufAddInt (textBuf_t *b, int n);
 void textBufAddName (textBuf_t *b, const char *name);
 void textBufAddString (textBuf_t *b, const char *str);
 void textBufAddLabelInt (textBuf_t *b, const char *name, int val);

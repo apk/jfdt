@@ -13,11 +13,24 @@ void textBufInit (textBuf_t *b) {
 }
 
 static void make_place (textBuf_t *b, int ex) {
+  int xl = b->len + ex + 2;
   if (b->len + ex + 2 > b->alloc_len) {
     int nl = 2 * b->alloc_len / 3 + 10;
+    if (xl > nl) {
+      printf ("oops %d vs %d\n", xl, nl);
+      nl = xl + 20;
+    }
     b->data = realloc (b->data, nl);
     b->alloc_len = nl;
   }
+}
+
+void textBufAddInt (textBuf_t *b, int n) {
+  int cnt = 0;
+  make_place (b, 2 + 3 * sizeof (n));
+  if (b->len > 0) b->data [b->len ++] = ' ';
+  sprintf (b->data + b->len, "%d", n);
+  while (b->data [b->len]) b->len ++;
 }
 
 static char hexdig [] = "0123456789abcdef";
